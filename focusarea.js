@@ -14,7 +14,20 @@ function focusOnLatestPathGraphic() {
   const path = document.querySelector("#mapMain_graphics_layer path");
   if (path) {
     path.scrollIntoView({ behavior: "smooth", block: "center" });
-    console.log("🎯 聚焦到 path 成功！");
+
+    // 高亮處理
+    path.style.transition = "all 0.3s ease";
+    path.style.stroke = "orange";
+    path.style.strokeWidth = "4px";
+    path.style.filter = "drop-shadow(0 0 6px orange)";
+
+    setTimeout(() => {
+      path.style.stroke = "rgb(255, 0, 0)";
+      path.style.strokeWidth = "2px";
+      path.style.filter = "none";
+    }, 1500);
+
+    console.log("🎯 聚焦 + 高亮 path 成功！");
   } else {
     console.warn("⚠️ 未找到 path，略過聚焦");
   }
