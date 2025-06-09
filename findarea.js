@@ -1,5 +1,4 @@
 (async function () {
-    // 等待特定元素出現（通用 async 等待）
     function waitForElement(selector, timeout = 10000) {
         return new Promise((resolve, reject) => {
             let timePassed = 0;
@@ -17,7 +16,6 @@
         });
     }
 
-    // 載入 jQuery（如尚未存在）
     if (typeof $ === 'undefined') {
         const jq = document.createElement('script');
         jq.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
@@ -34,26 +32,39 @@
         "綠地用地", "機關用地", "灌溉溝渠用地"
     ];
 
-    let currentIndex = 0;
+    // 讀取 localStorage 當前進度（如果存在）
+    let findareaLog = JSON.parse(localStorage.getItem("findareaLog") || "{}");
+    let currentIndex = findareaLog.lastIndex || 0;
+    let actionLog = findareaLog.log || [];
 
-    // 設定都市計畫區為「02 八德(八德地區)都市計畫」
+    // 設定都市計畫區為「02 八德(八德地區)」
     await waitForElement('#ddlConditionCityplan');
     $('#ddlConditionCityplan').val("02,01").trigger("chosen:updated").change();
-    await new Promise(r => setTimeout(r, 1500));
+    console.log("✅ 已設定都市計畫區：02 八德(八德地區)");
 
     // 取得分區選單與按鈕
     const distSelect = await waitForElement('#ddlCityplanConditionDistUse');
-    const button = await waitForElement('.btn-ditsuse-region');
+    const button = await waitForElement('.btn-distuse-region');
+
+    function updateLog(index) {
+        const distName = distUses[index];
+        actionLog.push(distName);
+        const logObj = {
+            lastIndex: index,
+            log: actionLog
+        };
+        localStorage.setItem("findareaLog", JSON.stringify(logObj));
+        console.log(`📝 已記錄進度：第 ${index + 1} 項「${distName}」`);
+    }
 
     function setNextDistUse(index) {
         if (index >= distUses.length) {
-            alert("✅ 所有使用分區已完成！");
+            alert("🎉 所有使用分區已完成！");
             return;
         }
 
         const distName = distUses[index];
         const option = $(`#ddlCityplanConditionDistUse option:contains("${distName}")`);
-
         if (option.length === 0) {
             alert(`❌ 找不到選項: ${distName}`);
             return;
@@ -64,15 +75,16 @@
             .trigger('chosen:updated')
             .change();
 
-        console.log(`✅ 已選擇使用分區：${distName}`);
+        console.log(`🔄 已選擇使用分區：${distName}`);
 
         setTimeout(() => {
-            $('.btn-ditsuse-region').click();
+            $('.btn-distuse-region').click();
             console.log(`📌 已點擊「顯示使用分區圖」`);
+            updateLog(index);
         }, 1000);
     }
 
-    // N 鍵前進
+    // 鍵盤 N 可切換下一項
     $(document).keydown(function(e){
         if (e.key.toUpperCase() === "N") {
             currentIndex++;
@@ -80,8 +92,8 @@
         }
     });
 
-    // 初始第一個分區
+    // 執行初始
     setTimeout(() => {
         setNextDistUse(currentIndex);
-    }, 2000);
+    }, 1500);
 })();
